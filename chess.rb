@@ -11,6 +11,53 @@ module MoveParser
   end
 end
 
+module MultiMover
+  def get_peaceful_poss(board)
+    coords = []
+
+    self.class::MOVE_DIFF.each do |diff|
+      i = 1
+      until i == self.class::MOVE_LENGTH
+
+        multiplied = [diff[0] * i, diff[1] * i]
+        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) }
+
+        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+
+        coords << trans
+
+        i += 1
+      end
+    end
+
+    coords.keep_if { |p| on_board?(p) }
+  end
+
+  def get_attack_poss(board)
+    coords = []
+    add_to_coords = nil
+
+    self.class::MOVE_DIFF.each do |diff|
+      i = 1
+      until i == self.class::MOVE_LENGTH
+
+        multiplied = [diff[0] * i, diff[1] * i]
+        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) } # [2, 2]
+
+        add_to_coords = trans
+
+        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+
+        i += 1
+      end
+
+      coords << add_to_coords
+    end
+
+    coords.keep_if { |p| on_board?(p) && p != pos }
+  end
+end
+
 class ChessGame
 
   attr_accessor :board, :turn, :players
@@ -233,93 +280,53 @@ class Knight < Piece
   end
 end
 
-
 class Bishop < Piece
+  include MultiMover
+
   MOVE_DIFF = [[-1, -1], [1, 1], [1, -1], [-1, 1]]
+  MOVE_LENGTH = 8
 
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2657" : "\u265D"
   end
-
-  def get_peaceful_poss(board)
-    coords = []
-
-    MOVE_DIFF.each do |diff|
-      i = 1
-      until i == 8
-
-        multiplied = [diff[0] * i, diff[1] * i]
-        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) }
-
-        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
-
-        coords << trans
-
-        i += 1
-      end
-    end
-
-    coords.keep_if { |p| on_board?(p) }
-  end
-
-  def get_attack_poss(board)
-    coords = []
-    add_to_coords = nil
-
-    MOVE_DIFF.each do |diff|
-      i = 1
-      until i == 8
-
-        multiplied = [diff[0] * i, diff[1] * i]
-        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) } # [2, 2]
-
-        add_to_coords = trans
-
-        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
-
-        i += 1
-      end
-
-      coords << add_to_coords
-    end
-
-    coords.keep_if { |p| on_board?(p) && p != pos }
-  end
-
 end
 
 class Rook < Piece
+  include MultiMover
+
+  MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1]]
+  MOVE_LENGTH = 8
+
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2656" : "\u265C"
   end
-
-  def move(user_input)
-
-  end
 end
 
 class Queen < Piece
+  include MultiMover
+
+  MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1], [-1, -1], [1, 1], [1, -1], [-1, 1]]
+  MOVE_LENGTH = 8
+
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2655" : "\u265B"
   end
-
-  def move(user_input)
-
-  end
 end
 
 class King < Piece
+  include MultiMover
+
+  MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1], [-1, -1], [1, 1], [1, -1], [-1, 1]]
+  MOVE_LENGTH = 2
+
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2654" : "\u265A"
   end
 
-  def move(user_input)
-
-  end
 end
 
 class HumanPlayer
@@ -350,16 +357,4 @@ end
 if __FILE__ == $0
   c = ChessGame.new
   c.play
-end
-
-module StraightMover
-  #how rooks, kings, queens move
-end
-
-module DiagMover
-  #how bishops, kings, and queens move
-end
-
-module MultiMover
-  #how bishops, rooks, and queens move
 end
