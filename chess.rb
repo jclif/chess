@@ -1,6 +1,20 @@
+require 'debugger'; debugger
+
+module MoveParser
+  def convert(move) # ["f2", "f3"] => [[6,5],[5,5]]
+    move.map! do |pos|
+      col = ("a".."h").to_a.index(pos[0])
+      [8-pos[1].to_i, col]
+    end
+
+    move
+  end
+end
+
 class ChessGame
+
   attr_accessor :board, :turn, :players
-  # variables:  turn, board, players
+
   def initialize
     @board = Board.new
     @turn = :white
@@ -12,9 +26,25 @@ class ChessGame
     until board.won? || board.draw?
       board.render
 
-      players[turn].get_move
-      make_move
+      move = players[turn].get_move(board, turn)
+      make_move(move)
+      switch_turn
     end
+  end
+
+  def switch_turn
+    self.turn = turn == :white ? :black : :white
+  end
+
+  def make_move(move) # [[6,0],[5,0]]
+    from_row = move[0][0]
+    from_col = move[0][1]
+    to_row = move[1][0]
+    to_col = move[1][1]
+
+    board.board[to_row][to_col] = board.board[from_row][from_col]
+    board.board[from_row][from_col] = nil
+    board.board[to_row][to_col].pos = move[1]
   end
 end
 
@@ -91,17 +121,23 @@ class Board
     end
   end
 
-  def valid?(move) # ["f2", "f3"]
-    from_coord, to_coord = convert(move)
+  def valid?(move, turn) # [[5, 5], [6, 5]]
 
-    return false unless self[from_coord]
+    from_pos, to_pos = move
+
+    return false unless self[from_pos]
     #check for piece of same color on end square
-    from_piece = self[from_coord]
+    from_piece = self[from_pos]
 
-    if self[to_coord] #theres a piece at to spot
-      to_piece = self[to_coord]
+    #check to see if player can move from_piece
+    return false unless from_piece.color == turn
+
+    if self[to_pos] #theres a piece at to spot
+      to_piece = self[to_pos]
       return false if to_piece.color == from_piece.color
-      #the piece is attacking
+      return false unless from_piece.get_attack_poss(board).include?(to_pos)
+    else #there's no piece at to_pos
+      return false unless from_piece.get_peaceful_poss(board).include?(to_pos)
     end
 
     #make sure to_square is included in valid_moves of piece at from_square
@@ -109,15 +145,6 @@ class Board
     true
 
     #hypothetically make move to see if king was in check
-  end
-
-  def convert(move) # ["f2", "f3"] => [[6,5],[5,5]]
-    move.map! do |coord|
-      col = ("a".."h").to_a.index(coord[0])
-      [8-coord[1].to_i, col]
-    end
-
-    move
   end
 
   def won?
@@ -144,6 +171,10 @@ class Piece
     unicode
   end
 
+  def on_board?(to_pos)
+    to_pos[0].between?(0, 7) && to_pos[1].between?(0, 7)
+  end
+
 end
 
 class Pawn  < Piece
@@ -152,31 +183,110 @@ class Pawn  < Piece
     @unicode = @color == :white ? "\u2659" : "\u265F"
   end
 
-  def move(user_input)
+  def get_peaceful_poss(board)
+    coords = []
+    if color == :white
+      coords << [pos[0] - 1, pos[1]]
+      coords << [pos[0] - 2, pos[1]] if pos[0] == 6
+    else
+      coords << [pos[0] + 1, pos[1]]
+      coords << [pos[0] + 2, pos[1]] if pos[0] == 1
+    end
 
+    coords.keep_if { |p| on_board?(p) }
+  end
+
+  def get_attack_poss(board)
+    coords = []
+    if color == :white
+      coords << [pos[0] - 1, pos[1] - 1]
+      coords << [pos[0] - 1, pos[1] + 1]
+    else
+      coords << [pos[0] + 1, pos[1] - 1]
+      coords << [pos[0] + 1, pos[1] + 1]
+    end
+
+    coords.keep_if { |p| on_board?(p) }
   end
 end
 
 class Knight < Piece
+  MOVE_DIFF = [[1,2],[2,1],[-1,2],[2,-1],[1,-2],[-2,1],[-1,-2],[-2,-1]]
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2658" : "\u265E"
   end
 
-  def move(user_input)
+  def get_peaceful_poss(board)
+    coords = []
 
+    MOVE_DIFF.each do |diff|
+      coords << [pos,diff].transpose.map { |x| x.reduce(:+) }
+    end
+
+    coords.keep_if { |p| on_board?(p) }
+  end
+
+  def get_attack_poss(board)
+    #because they are identical
+    get_peaceful_poss(board)
   end
 end
 
+
 class Bishop < Piece
+  MOVE_DIFF = [[-1, -1], [1, 1], [1, -1], [-1, 1]]
+
   def initialize(pos, color)
     super(pos, color)
     @unicode = @color == :white ? "\u2657" : "\u265D"
   end
 
-  def move(user_input)
+  def get_peaceful_poss(board)
+    coords = []
 
+    MOVE_DIFF.each do |diff|
+      i = 1
+      until i == 8
+
+        multiplied = [diff[0] * i, diff[1] * i]
+        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) }
+
+        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+
+        coords << trans
+
+        i += 1
+      end
+    end
+
+    coords.keep_if { |p| on_board?(p) }
   end
+
+  def get_attack_poss(board)
+    coords = []
+    add_to_coords = nil
+
+    MOVE_DIFF.each do |diff|
+      i = 1
+      until i == 8
+
+        multiplied = [diff[0] * i, diff[1] * i]
+        trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) } # [2, 2]
+
+        add_to_coords = trans
+
+        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+
+        i += 1
+      end
+
+      coords << add_to_coords
+    end
+
+    coords.keep_if { |p| on_board?(p) && p != pos }
+  end
+
 end
 
 class Rook < Piece
@@ -213,20 +323,24 @@ class King < Piece
 end
 
 class HumanPlayer
+  include MoveParser
+
   attr_accessor :color
 
   def initialize(color)
     @color = color
   end
 
-  def get_move
+  def get_move(board, turn)
     puts "Enter your move. Ex: 'f2 f3'"
     answer = gets.chomp.split
 
-    unless board.valid?(answer)
-      StandardError.new "Invalid move. Try again loser!"
+    unless board.valid?(convert(answer), turn)
+      raise StandardError.new "Invalid move. Try again loser!"
     end
-  rescue StandError => e
+
+    answer
+  rescue StandardError => e
     puts e.message
     retry
   end
@@ -234,7 +348,8 @@ class HumanPlayer
 end
 
 if __FILE__ == $0
-  b = ChessGame.new.board
+  c = ChessGame.new
+  c.play
 end
 
 module StraightMover
