@@ -6,12 +6,13 @@ require 'colorize'
 
 class ChessGame
 
-  attr_accessor :board, :turn, :players
+  attr_accessor :board, :turn, :players, :pgn
 
   def initialize
     @board = Board.new
     @turn = :white
     @players = {white: HumanPlayer.new(:white), black: HumanPlayer.new(:black)}
+    @pgn = []
   end
 
   def play
@@ -20,8 +21,11 @@ class ChessGame
       board.render(turn)
       move = players[turn].get_move(board, turn)
       board.make_move(move)
+      self.pgn << move
       switch_turn
     end
+
+    puts board.won?(turn) ? "Congrats!" : "Everybody wins!."
   end
 
   def switch_turn

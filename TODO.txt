@@ -1,0 +1,8 @@
+-lots of draw conditions (50-move rule,threefold repitition, offer,...)
+-en passant
+-castling
+-move_list {from_coord,to_coord,piece}
+-load and save pgn to file
+-refactor board creation (ternary statements)
+
+-AIIIIIIII
