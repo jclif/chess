@@ -11,7 +11,21 @@ class Board
     elsif args.length == 1
       board[args[0][0]][args[0][1]]
     else
-      raise StandardError "Square brackets needs 1 or 2 arguments."
+      raise StandardError.new "Square brackets needs 1 or 2 arguments."
+    end
+  rescue StandardError => e
+    puts e.message
+    puts args
+  end
+
+  def []=(*args)
+    value = args.pop
+    if args.length == 2
+      board[args[0]][args[1]] = value
+    elsif args.length == 1
+      board[args[0][0]][args[0][1]] = value
+    else
+      raise StandardError.new "Square brackets needs 1 or 2 arguments."
     end
   rescue StandardError => e
     puts e.message
@@ -58,11 +72,27 @@ class Board
     end
   end
 
+  def make_move(move) # [[6,0],[5,0]]
+    captured_piece = self[move[1]]
+
+    self[move[1]] = self[move[0]]
+    self[move[0]] = nil
+    self[move[1]].pos = move[1]
+
+    captured_piece
+  end
+
+  def unmake_move(captured_piece, move)
+    self[move[0]] = self[move[1]]
+    self[move[1]] = captured_piece
+    self[move[0]].pos = move[0]
+  end
+
   def render(turn)
 
     puts "    a  b  c  d  e  f  g  h "
     board.each_with_index do |row, i|
-      print " #{i + 1} "
+      print " #{8 - i} "
       row.each_with_index do |piece, j|
         color = (i + j).even? ? :light_cyan : :cyan
         if piece
@@ -96,11 +126,20 @@ class Board
       return false unless from_piece.get_peaceful_coords(board).include?(to_pos)
     end
 
-    #return false if check?(turn)
+    #hypothetically make move to see if king was in check
+    return doesnt_yield_check?(move, turn)
 
     true
+  end
 
-    #hypothetically make move to see if king was in check
+  def doesnt_yield_check?(move, turn)
+    captured_piece = make_move(move)
+
+    no_check = !(check?(turn))
+
+    unmake_move(captured_piece, move)
+
+    no_check
   end
 
   def check?(turn) #white's turn, white's king
