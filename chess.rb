@@ -3,6 +3,7 @@ require './players.rb'
 require './board.rb'
 require './pieces.rb'
 require 'colorize'
+require 'yaml/store'
 
 class ChessGame
   include MoveParser
@@ -32,8 +33,11 @@ class ChessGame
   end
 
   def play
+
+    #board.won?(board, move_hashes, turn) ||
+
     # get moves and make moves until game is won
-    until board.won?(board, move_hashes, turn) || board.draw?(turn, move_hashes)
+    until board.draw?(turn, move_hashes)
       board.render(board, move_hashes, turn)
       move = players[turn].get_move(board, turn, move_hashes)
       board.make_move(move)

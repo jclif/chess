@@ -75,39 +75,10 @@ class Board
       end
     end
 
-    captured_piece = self[move[1]]
-
     self[move[1]] = self[move[0]]
     self[move[0]] = nil
     self[move[1]].pos = move[1]
 
-    captured_piece
-  end
-
-  def unmake_move(captured_piece, move)
-    #debugger
-
-    if self[move[1]].is_a?(King)
-      black_queenside = [[0, 4], [0, 2]]
-      black_kingside = [[0, 4], [0, 6]]
-      white_queenside = [[7, 4], [7, 2]]
-      white_kingside = [[7, 4], [7, 6]]
-
-      case move
-      when black_queenside
-        unmake_move(captured_piece, [[0, 0],[0, 3]])
-      when black_kingside
-        unmake_move(captured_piece, [[0, 7],[0, 5]])
-      when white_queenside
-        unmake_move(captured_piece, [[7, 0],[7, 3]])
-      when white_kingside
-        unmake_move(captured_piece, [[7, 7],[7, 5]])
-      end
-    end
-
-    self[move[0]] = self[move[1]]
-    self[move[1]] = captured_piece
-    self[move[0]].pos = move[0]
   end
 
   def render(board, move_hashes, turn)
@@ -155,22 +126,28 @@ class Board
   end
 
   def doesnt_yield_check?(board, move_hashes, turn, move)
-    captured_piece = make_move(move)
+    yamlized_board = board.to_yaml
 
-    no_check = !(check?(self, move_hashes, turn))
+    b = YAML::load(yamlized_board)
 
-    unmake_move(captured_piece, move)
+    b.make_move(move)
 
-    no_check
+    !b.check?(b, move_hashes, turn)
   end
 
-  def check?(board, move_hashes, turn) #white's turn, white's king
-    @board.each do |row|
+  def dup(move_hashes)
+    b = Board.new
+
+
+  end
+
+  def check?(b, move_hashes, turn) #white's turn, white's king
+    b.board.each do |row|
       row.each_with_index do |piece, i|
         next if piece.nil? || piece.color == turn
-        attack_coords = piece.get_attack_coords(self, move_hashes, turn)
+        attack_coords = piece.get_attack_coords(b, move_hashes, turn)
         attack_coords.each do |coord|
-          if self[coord].is_a?(King) && self[coord].color == turn
+          if b[coord].is_a?(King) && b[coord].color == turn
             return true
           end
         end
@@ -186,6 +163,7 @@ class Board
   end
 
   def draw?(turn, move_hashes)
+
     board.each do |row|
       row.each do |piece|
         next if piece.nil?
