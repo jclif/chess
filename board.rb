@@ -158,13 +158,27 @@ class Board
     false
   end
 
-  def won?
-    # check that king is under attack and there is no move to uncheck
-    false
+  def won?(turn)
+    return false unless draw?(turn)
+    return check?(turn)
   end
 
-  def draw?
-    # there's no legal move
-    false
+  def draw?(turn)
+    board.each do |row|
+      row.each do |piece|
+        next if piece.nil?
+        next unless piece.color == turn
+        unless piece.get_peaceful_coords(board).empty? &&
+          piece.get_attack_coords(board).empty?
+          coords = piece.get_peaceful_coords(board) + piece.get_attack_coords(board)
+          coords.keep_if do |coord|
+            valid?([piece.pos, coord], turn)
+          end
+          return false unless coords.empty?
+        end
+      end
+    end
+
+    true
   end
 end

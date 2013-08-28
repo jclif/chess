@@ -16,7 +16,7 @@ class ChessGame
 
   def play
     # get moves and make moves until game is won
-    until board.won? || board.draw?
+    until board.won?(turn) || board.draw?(turn)
       board.render(turn)
       move = players[turn].get_move(board, turn)
       board.make_move(move)

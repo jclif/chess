@@ -74,10 +74,10 @@ class Pawn < Piece
     coords = []
     if color == :white
       coords << [pos[0] - 1, pos[1]]
-      coords << [pos[0] - 2, pos[1]] if pos[0] == 6
+      coords << [pos[0] - 2, pos[1]] if pos[0] == 6 && board[pos[0] - 1][pos[1]].nil?
     else
       coords << [pos[0] + 1, pos[1]]
-      coords << [pos[0] + 2, pos[1]] if pos[0] == 1
+      coords << [pos[0] + 2, pos[1]] if pos[0] == 1 && board[pos[0] + 1][pos[1]].nil?
     end
 
     coords.keep_if { |p| on_board?(p) }
