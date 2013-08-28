@@ -102,7 +102,62 @@ class Pawn < Piece
       coords << [pos[0] + 1, pos[1] + 1]
     end
 
+    debugger
+
+    if color == :white
+      if en_passant?(:right, board, move_hashes, turn)
+        coords << [pos[0] - 1, pos[1] + 1]
+      end
+
+      if en_passant?(:left, board, move_hashes, turn)
+        coords << [pos[0] - 1, pos[1] - 1]
+      end
+    else
+      if en_passant?(:right, board, move_hashes, turn)
+        coords << [pos[0] + 1, pos[1] + 1]
+      end
+
+      if en_passant?(:left, board, move_hashes, turn)
+        coords << [pos[0] + 1, pos[1] - 1]
+      end
+    end
+
     coords.keep_if { |p| on_board?(p) }
+  end
+
+  def en_passant?(direction, board, move_hashes, turn)
+    if color == :white?
+      return false unless pos[0] == 3
+    else
+      return false unless pos[0] == 4
+    end
+
+    return false unless move_hashes.last[:piece].is_a?(Pawn)
+
+    enemy_start_pos = move_hashes.last[:move][0]
+    enemy_end_pos = move_hashes.last[:move][1]
+
+    if color == :white?
+      unless (enemy_start_pos[0] == pos[0] - 1) && (enemy_end_pos[0] == pos[0])
+        return false
+      end
+    else
+      unless (enemy_start_pos[0] == pos[0] + 1) && (enemy_end_pos[0] == pos[0])
+        return false
+      end
+    end
+
+    if direction == :right
+      unless (enemy_start_pos[1] == pos[1] + 1) && (enemy_end_pos[1] == pos[1] + 1)
+        return false
+      end
+    else
+      unless (enemy_start_pos[1] == pos[1] - 1) && (enemy_end_pos[1] == pos[1] - 1)
+        return false
+      end
+    end
+
+    true
   end
 end
 

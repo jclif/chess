@@ -17,9 +17,11 @@ class ChessGame
   def self.load_game
     kingside = "g2 g3,g7 g6,f1 g2,f8 g7,g1 f3,g8 f6"
     queenside = "b2 b3,b7 b6,b1 c3,b8 c6,c1 b2,c8 b7,d2 d3,d7 d6,d1 d2,d8 d7"
+    en_pass = "d2 d4,a7 a6,d4 d5,e7 e5"
+
     g = ChessGame.new
-    queenside.split(",").each do |pair|
-      g.board.make_move(g.convert(pair.split))
+    en_pass.split(",").each do |pair|
+      g.board.make_move(g.convert(pair.split), g.move_hashes)
       g.switch_turn
     end
     g.play
@@ -40,7 +42,7 @@ class ChessGame
     until board.draw?(turn, move_hashes)
       board.render(board, move_hashes, turn)
       move = players[turn].get_move(board, turn, move_hashes)
-      board.make_move(move)
+      board.make_move(move, move_hashes)
       self.move_hashes << {piece: board[move[1]], move: move}
       switch_turn
     end

@@ -56,7 +56,7 @@ class Board
     end
   end
 
-  def make_move(move) # [[6,0],[5,0]]
+  def make_move(move, move_hashes) # [[6,0],[5,0]]
     if self[move[0]].is_a?(King)
       black_queenside = [[0, 4], [0, 2]]
       black_kingside = [[0, 4], [0, 6]]
@@ -76,9 +76,22 @@ class Board
     end
 
     self[move[1]] = self[move[0]]
-    self[move[0]] = nil
-    self[move[1]].pos = move[1]
 
+    if en_passant_move?(move, move_hashes)
+      self[move_hashes.last[:move][1]] = nil
+    else
+      self[move[0]] = nil
+    end
+
+    self[move[1]].pos = move[1]
+  end
+
+  def en_passant_move?(move, move_hashes)
+    return false unless !move_hashes.empty? && move_hashes.last[:piece].is_a?(Pawn) &&
+    2 == (move_hashes.last[:move][0][0] - move_hashes.last[:move][1][0]).abs &&
+    1 == (move[1][1] - move_hashes.last[:move][1][1]).abs
+
+    true
   end
 
   def render(board, move_hashes, turn)
@@ -130,7 +143,7 @@ class Board
 
     b = YAML::load(yamlized_board)
 
-    b.make_move(move)
+    b.make_move(move, move_hashes)
 
     !b.check?(b, move_hashes, turn)
   end
