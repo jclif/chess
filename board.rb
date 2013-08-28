@@ -61,12 +61,14 @@ class Board
   def render(turn)
 
     puts "    a  b  c  d  e  f  g  h "
-    board.each do |row|
-      row.each do |piece|
+    board.each_with_index do |row, i|
+      print " #{i + 1} "
+      row.each_with_index do |piece, j|
+        color = (i + j).even? ? :light_cyan : :cyan
         if piece
-          print " #{piece} "
+          print " #{piece} ".colorize(:background => color)
         else
-          print "   "
+          print "   ".colorize( :background => color )
         end
       end
       print "\n"

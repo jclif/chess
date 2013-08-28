@@ -1,7 +1,8 @@
-require 'debugger'; debugger
+# require 'debugger'; debugger
 require './players.rb'
 require './board.rb'
 require './pieces.rb'
+require 'colorize'
 
 class ChessGame
 
