@@ -1,5 +1,5 @@
 module MultiMover
-  def get_peaceful_coords(board)
+  def get_peaceful_coords(board, move_hashes, turn)
     coords = []
 
     self.class::MOVE_DIFF.each do |diff|
@@ -9,7 +9,7 @@ module MultiMover
         multiplied = [diff[0] * i, diff[1] * i]
         trans = [pos,multiplied].transpose.map { |x| x.reduce(:+) }
 
-        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+        break if !(on_board?(trans)) || board[trans[0], trans[1]]
 
         coords << trans
 
@@ -20,7 +20,10 @@ module MultiMover
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_coords(board)
+  def get_attack_coords(board, move_hashes, turn)
+    board = board.board if board.is_a?(Board)
+
+
     coords = []
     add_to_coords = nil
 
@@ -33,7 +36,7 @@ module MultiMover
 
         add_to_coords = trans
 
-        break if !(on_board?(trans)) || board[trans[0]][trans[1]]
+        break if !(on_board?(trans)) || board[trans[0], trans[1]]
 
         i += 1
       end
@@ -46,16 +49,22 @@ module MultiMover
 end
 
 class Piece
+  include MultiMover
+
   attr_accessor :pos, :color, :unicode
 
-  def initialize(pos, color)
+  def initialize(pos)
     @pos = pos
-    @color = color
+    @color = get_color
     @unicode = ""
   end
 
   def to_s
     unicode
+  end
+
+  def get_color
+    return [6, 7].include?(pos[0]) ? :white : :black
   end
 
   def on_board?(to_pos)
@@ -65,25 +74,25 @@ class Piece
 end
 
 class Pawn < Piece
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2659" : "\u265F"
   end
 
-  def get_peaceful_coords(board)
+  def get_peaceful_coords(board, move_hashes, turn)
     coords = []
     if color == :white
       coords << [pos[0] - 1, pos[1]]
-      coords << [pos[0] - 2, pos[1]] if pos[0] == 6 && board[pos[0] - 1][pos[1]].nil?
+      coords << [pos[0] - 2, pos[1]] if pos[0] == 6 && board[(pos[0] - 1), pos[1]].nil?
     else
       coords << [pos[0] + 1, pos[1]]
-      coords << [pos[0] + 2, pos[1]] if pos[0] == 1 && board[pos[0] + 1][pos[1]].nil?
+      coords << [pos[0] + 2, pos[1]] if pos[0] == 1 && board[(pos[0] + 1), pos[1]].nil?
     end
 
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_coords(board)
+  def get_attack_coords(board, move_hashes, turn)
     coords = []
     if color == :white
       coords << [pos[0] - 1, pos[1] - 1]
@@ -99,12 +108,12 @@ end
 
 class Knight < Piece
   MOVE_DIFF = [[1,2],[2,1],[-1,2],[2,-1],[1,-2],[-2,1],[-1,-2],[-2,-1]]
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2658" : "\u265E"
   end
 
-  def get_peaceful_coords(board)
+  def get_peaceful_coords(board, move_hashes, turn)
     coords = []
 
     MOVE_DIFF.each do |diff|
@@ -114,56 +123,122 @@ class Knight < Piece
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_coords(board)
+  def get_attack_coords(board, move_hashes, turn)
     #because they are identical
-    get_peaceful_coords(board)
+    get_peaceful_coords(board, move_hashes, turn)
   end
 end
 
 class Bishop < Piece
-  include MultiMover
-
   MOVE_DIFF = [[-1, -1], [1, 1], [1, -1], [-1, 1]]
   MOVE_LENGTH = 8
 
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2657" : "\u265D"
   end
 end
 
 class Rook < Piece
-  include MultiMover
-
   MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1]]
   MOVE_LENGTH = 8
 
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2656" : "\u265C"
   end
 end
 
 class Queen < Piece
-  include MultiMover
-
   MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1], [-1, -1], [1, 1], [1, -1], [-1, 1]]
   MOVE_LENGTH = 8
 
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2655" : "\u265B"
   end
 end
 
 class King < Piece
-  include MultiMover
-
   MOVE_DIFF = [[1,0], [-1, 0], [0, 1], [0, -1], [-1, -1], [1, 1], [1, -1], [-1, 1]]
   MOVE_LENGTH = 2
 
-  def initialize(pos, color)
-    super(pos, color)
+  def initialize(pos)
+    super(pos)
     @unicode = @color == :white ? "\u2654" : "\u265A"
+  end
+
+  def get_peaceful_coords(board, move_hashes, turn)
+    coords = super
+
+    co = castle_options(board, move_hashes, turn) # :kingside, #queenside #both #neither
+
+    case co
+    when :kingside
+      y = turn == :white ? 7 : 0
+      coords << [y, 6]
+    when :queenside
+      y = turn == :white ? 7 : 0
+      coords << [y, 2]
+    when :both
+      y = turn == :white ? 7 : 0
+      coords << [y, 6]
+      coords << [y, 2]
+    end
+
+    coords
+  end
+
+  def castle_options(board, move_hashes, turn)
+    #not in check currently
+    return :neither if board.check?(board, move_hashes, turn)
+
+    king = board.board.flatten.select { |piece| piece && piece.is_a?(King) && piece.color == turn}[0]
+
+    #king hasnt moved
+    return :neither if move_hashes.any? { |hash| hash.has_value?(king) }
+
+    q_rook = board.board.flatten.select { |piece| piece && piece.is_a?(Rook) && piece.color == turn && piece.pos[1] == 0}[0]
+
+    can_castle_queenside = can_castle?(q_rook, king, move_hashes, board, turn)
+
+    k_rook = board.board.flatten.select { |piece| piece && piece.is_a?(Rook) &&
+      piece.color == turn && piece.pos[1] == 7}[0]
+
+    can_castle_kingside = can_castle?(k_rook, king, move_hashes, board, turn)
+
+    if can_castle_kingside && can_castle_queenside
+      return :both
+    elsif can_castle_kingside
+      return :kingside
+    elsif can_castle_queenside
+      return :queenside
+    else
+      return :neither
+    end
+  end
+
+  def can_castle?(rook, king, move_hashes, board, turn)
+    return false if move_hashes.any? { |hash| hash.has_value?(rook) }
+
+    if rook.pos[1] == 0 #if it's queenside
+      path = [[rook.pos[0], 1], [rook.pos[0], 2], [rook.pos[0], 3]]
+    else #if it's kingside
+      path = [[rook.pos[0], 5], [rook.pos[0], 6]]
+    end
+
+    #check for pieces in path
+    return false if path.any? { |coord| board[coord] }
+
+    board.board.each do |row|
+      row.each do |piece|
+        next if piece.nil? || piece.color == turn
+
+        return false unless (piece.get_attack_coords(board, move_hashes, turn) & path).empty?
+
+      end
+    end
+
+    true
   end
 end

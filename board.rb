@@ -34,38 +34,22 @@ class Board
 
   def new_board
     Array.new(8) do |row|
-      if row == 0
+      if row == 0 || row == 7 #row 0 is black, row 7 is white
         Array.new(8) do |col|
           if col == 0 || col == 7
-            Rook.new(([row, col]), :black)
+            Rook.new([row, col])
           elsif col == 1 || col == 6
-            Knight.new(([row, col]), :black)
+            Knight.new([row, col])
           elsif col == 2 || col == 5
-            Bishop.new(([row, col]), :black)
+            Bishop.new([row, col])
           elsif col == 4
-            King.new(([row, col]), :black)
+            King.new([row, col])
           else
-            Queen.new(([row, col]), :black)
+            Queen.new([row, col])
           end
         end
-      elsif row == 1
-        Array.new(8) { |col| Pawn.new(([row, col]), :black) }
-      elsif row == 6
-        Array.new(8) { |col| Pawn.new(([row, col]), :white) }
-      elsif row == 7
-        Array.new(8) do |col|
-          if col == 0 || col == 7
-            Rook.new(([row, col]), :white)
-          elsif col == 1 || col == 6
-            Knight.new(([row, col]), :white)
-          elsif col == 2 || col == 5
-            Bishop.new(([row, col]), :white)
-          elsif col == 4
-            King.new(([row, col]), :white)
-          else
-            Queen.new(([row, col]), :white)
-          end
-        end
+      elsif row == 1 || row == 6 #row 1 is black, row 6 is white
+        Array.new(8) { |col| Pawn.new([row, col]) }
       else
         Array.new(8)
       end
@@ -73,6 +57,24 @@ class Board
   end
 
   def make_move(move) # [[6,0],[5,0]]
+    if self[move[0]].is_a?(King)
+      black_queenside = [[0, 4], [0, 2]]
+      black_kingside = [[0, 4], [0, 6]]
+      white_queenside = [[7, 4], [7, 2]]
+      white_kingside = [[7, 4], [7, 6]]
+
+      case move
+      when black_queenside
+        make_move([[0, 0],[0, 3]])
+      when black_kingside
+        make_move([[0, 7],[0, 5]])
+      when white_queenside
+        make_move([[7, 0],[7, 3]])
+      when white_kingside
+        make_move([[7, 7],[7, 5]])
+      end
+    end
+
     captured_piece = self[move[1]]
 
     self[move[1]] = self[move[0]]
@@ -83,15 +85,35 @@ class Board
   end
 
   def unmake_move(captured_piece, move)
+    #debugger
+
+    if self[move[1]].is_a?(King)
+      black_queenside = [[0, 4], [0, 2]]
+      black_kingside = [[0, 4], [0, 6]]
+      white_queenside = [[7, 4], [7, 2]]
+      white_kingside = [[7, 4], [7, 6]]
+
+      case move
+      when black_queenside
+        unmake_move(captured_piece, [[0, 0],[0, 3]])
+      when black_kingside
+        unmake_move(captured_piece, [[0, 7],[0, 5]])
+      when white_queenside
+        unmake_move(captured_piece, [[7, 0],[7, 3]])
+      when white_kingside
+        unmake_move(captured_piece, [[7, 7],[7, 5]])
+      end
+    end
+
     self[move[0]] = self[move[1]]
     self[move[1]] = captured_piece
     self[move[0]].pos = move[0]
   end
 
-  def render(turn)
+  def render(board, move_hashes, turn)
 
     puts "    a  b  c  d  e  f  g  h "
-    board.each_with_index do |row, i|
+    @board.each_with_index do |row, i|
       print " #{8 - i} "
       row.each_with_index do |piece, j|
         color = (i + j).even? ? :light_cyan : :cyan
@@ -104,10 +126,10 @@ class Board
       print "\n"
     end
 
-    puts "You're in check." if check?(turn)
+    puts "You're in check." if check?(self, move_hashes, turn)
   end
 
-  def valid?(move, turn) # [[5, 5], [6, 5]]
+  def valid?(move, turn, move_hashes) # [[5, 5], [6, 5]]
 
     from_pos, to_pos = move
 
@@ -121,32 +143,32 @@ class Board
     if self[to_pos] #theres a piece at to spot
       to_piece = self[to_pos]
       return false if to_piece.color == from_piece.color
-      return false unless from_piece.get_attack_coords(board).include?(to_pos)
+      return false unless from_piece.get_attack_coords(self, move_hashes, turn).include?(to_pos)
     else #there's no piece at to_pos
-      return false unless from_piece.get_peaceful_coords(board).include?(to_pos)
+      return false unless from_piece.get_peaceful_coords(self, move_hashes, turn).include?(to_pos)
     end
 
     #hypothetically make move to see if king was in check
-    return doesnt_yield_check?(move, turn)
+    return doesnt_yield_check?(self, move_hashes, turn, move)
 
     true
   end
 
-  def doesnt_yield_check?(move, turn)
+  def doesnt_yield_check?(board, move_hashes, turn, move)
     captured_piece = make_move(move)
 
-    no_check = !(check?(turn))
+    no_check = !(check?(self, move_hashes, turn))
 
     unmake_move(captured_piece, move)
 
     no_check
   end
 
-  def check?(turn) #white's turn, white's king
-    board.each do |row|
+  def check?(board, move_hashes, turn) #white's turn, white's king
+    @board.each do |row|
       row.each_with_index do |piece, i|
         next if piece.nil? || piece.color == turn
-        attack_coords = piece.get_attack_coords(board)
+        attack_coords = piece.get_attack_coords(self, move_hashes, turn)
         attack_coords.each do |coord|
           if self[coord].is_a?(King) && self[coord].color == turn
             return true
@@ -158,21 +180,22 @@ class Board
     false
   end
 
-  def won?(turn)
-    return false unless draw?(turn)
-    return check?(turn)
+  def won?(board, turn, move_hashes)
+    return false unless draw?(turn, move_hashes)
+    return check?(self, move_hashes, turn)
   end
 
-  def draw?(turn)
+  def draw?(turn, move_hashes)
     board.each do |row|
       row.each do |piece|
         next if piece.nil?
         next unless piece.color == turn
-        unless piece.get_peaceful_coords(board).empty? &&
-          piece.get_attack_coords(board).empty?
-          coords = piece.get_peaceful_coords(board) + piece.get_attack_coords(board)
+        unless piece.get_peaceful_coords(self, move_hashes, turn).empty? &&
+          piece.get_attack_coords(self, move_hashes, turn).empty?
+          coords = piece.get_peaceful_coords(self, move_hashes, turn) +
+            piece.get_attack_coords(self, move_hashes, turn)
           coords.keep_if do |coord|
-            valid?([piece.pos, coord], turn)
+            valid?([piece.pos, coord], turn, move_hashes)
           end
           return false unless coords.empty?
         end
