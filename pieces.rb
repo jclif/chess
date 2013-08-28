@@ -1,5 +1,5 @@
 module MultiMover
-  def get_peaceful_poss(board)
+  def get_peaceful_coords(board)
     coords = []
 
     self.class::MOVE_DIFF.each do |diff|
@@ -20,7 +20,7 @@ module MultiMover
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_poss(board)
+  def get_attack_coords(board)
     coords = []
     add_to_coords = nil
 
@@ -70,7 +70,7 @@ class Pawn < Piece
     @unicode = @color == :white ? "\u2659" : "\u265F"
   end
 
-  def get_peaceful_poss(board)
+  def get_peaceful_coords(board)
     coords = []
     if color == :white
       coords << [pos[0] - 1, pos[1]]
@@ -83,7 +83,7 @@ class Pawn < Piece
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_poss(board)
+  def get_attack_coords(board)
     coords = []
     if color == :white
       coords << [pos[0] - 1, pos[1] - 1]
@@ -104,7 +104,7 @@ class Knight < Piece
     @unicode = @color == :white ? "\u2658" : "\u265E"
   end
 
-  def get_peaceful_poss(board)
+  def get_peaceful_coords(board)
     coords = []
 
     MOVE_DIFF.each do |diff|
@@ -114,9 +114,9 @@ class Knight < Piece
     coords.keep_if { |p| on_board?(p) }
   end
 
-  def get_attack_poss(board)
+  def get_attack_coords(board)
     #because they are identical
-    get_peaceful_poss(board)
+    get_peaceful_coords(board)
   end
 end
 

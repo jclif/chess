@@ -58,17 +58,21 @@ class Board
     end
   end
 
-  def render
+  def render(turn)
+
+    puts "    a  b  c  d  e  f  g  h "
     board.each do |row|
       row.each do |piece|
         if piece
-          print piece.to_s
+          print " #{piece} "
         else
-          print " "
+          print "   "
         end
       end
       print "\n"
     end
+
+    puts "You're in check." if check?(turn)
   end
 
   def valid?(move, turn) # [[5, 5], [6, 5]]
@@ -85,16 +89,32 @@ class Board
     if self[to_pos] #theres a piece at to spot
       to_piece = self[to_pos]
       return false if to_piece.color == from_piece.color
-      return false unless from_piece.get_attack_poss(board).include?(to_pos)
+      return false unless from_piece.get_attack_coords(board).include?(to_pos)
     else #there's no piece at to_pos
-      return false unless from_piece.get_peaceful_poss(board).include?(to_pos)
+      return false unless from_piece.get_peaceful_coords(board).include?(to_pos)
     end
 
-    #make sure to_square is included in valid_moves of piece at from_square
+    #return false if check?(turn)
 
     true
 
     #hypothetically make move to see if king was in check
+  end
+
+  def check?(turn) #white's turn, white's king
+    board.each do |row|
+      row.each_with_index do |piece, i|
+        next if piece.nil? || piece.color == turn
+        attack_coords = piece.get_attack_coords(board)
+        attack_coords.each do |coord|
+          if self[coord].is_a?(King) && self[coord].color == turn
+            return true
+          end
+        end
+      end
+    end
+
+    false
   end
 
   def won?

@@ -1,4 +1,4 @@
-# require 'debugger'; debugger
+require 'debugger'; debugger
 require './players.rb'
 require './board.rb'
 require './pieces.rb'
@@ -16,7 +16,7 @@ class ChessGame
   def play
     # get moves and make moves until game is won
     until board.won? || board.draw?
-      board.render
+      board.render(turn)
       move = players[turn].get_move(board, turn)
       make_move(move)
       switch_turn
