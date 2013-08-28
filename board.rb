@@ -135,12 +135,6 @@ class Board
     !b.check?(b, move_hashes, turn)
   end
 
-  def dup(move_hashes)
-    b = Board.new
-
-
-  end
-
   def check?(b, move_hashes, turn) #white's turn, white's king
     b.board.each do |row|
       row.each_with_index do |piece, i|
