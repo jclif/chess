@@ -7,5 +7,4 @@ TODO
 * pawn promotion
 * load and save pgn to file
 * option to quit game or request draw
-
 * AIIIIIIII
