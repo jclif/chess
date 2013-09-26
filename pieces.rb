@@ -102,8 +102,6 @@ class Pawn < Piece
       coords << [pos[0] + 1, pos[1] + 1]
     end
 
-    debugger
-
     if color == :white
       if en_passant?(:right, board, move_hashes, turn)
         coords << [pos[0] - 1, pos[1] + 1]

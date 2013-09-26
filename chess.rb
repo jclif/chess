@@ -14,17 +14,21 @@ class ChessGame
     ChessGame.new.play
   end
 
-  def self.load_game
-    kingside = "g2 g3,g7 g6,f1 g2,f8 g7,g1 f3,g8 f6"
-    queenside = "b2 b3,b7 b6,b1 c3,b8 c6,c1 b2,c8 b7,d2 d3,d7 d6,d1 d2,d8 d7"
-    en_pass = "d2 d4,a7 a6,d4 d5,e7 e5"
+  def self.load_game(test_type)
 
-    g = ChessGame.new
-    en_pass.split(",").each do |pair|
-      g.board.make_move(g.convert(pair.split), g.move_hashes)
-      g.switch_turn
+    game_types = {kingside: "g2 g3,g7 g6,f1 g2,f8 g7,g1 f3,g8 f6",
+                  queenside: "b2 b3,b7 b6,b1 c3,b8 c6,c1 b2,c8 b7,d2 d3,d7 d6,d1 d2,d8 d7",
+                  en_pass: "d2 d4,a7 a6,d4 d5,e7 e5"
+    }
+
+    if game_types.keys.include?(test_type)
+      g = ChessGame.new
+      game_types[test_type].split(",").each do |pair|
+        g.board.make_move(g.convert(pair.split), g.move_hashes)
+        g.switch_turn
+      end
+      g.play
     end
-    g.play
   end
 
   def initialize
@@ -56,5 +60,5 @@ class ChessGame
 end
 
 if __FILE__ == $0
-  ChessGame.load_game
+  ChessGame.load_game(:en_pass)
 end
