@@ -12,11 +12,14 @@ class HumanPlayer
     move = ""
 
     loop do
-      puts "Enter your move. Ex: 'f2 f3'"
+      puts "Enter your move, or q to quit! Ex: 'f2 f3'"
       input = gets.chomp
-      move = game.pgn_to_coords(input)
 
-      break if regexp.match(input) && game.board.valid?(move)
+      abort("Thanks for playing!") if input == "q"
+      next unless regexp.match(input)
+
+      move = game.pgn_to_coords(input)
+      break if game.board.valid?(move)
     end
 
     move
