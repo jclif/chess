@@ -1,8 +1,9 @@
 class Board
-  attr_accessor :board
+  attr_accessor :board, :game
 
-  def initialize
+  def initialize(game)
     @board = new_board
+    @game = game
   end
 
   def [](*args)
@@ -94,7 +95,7 @@ class Board
     true
   end
 
-  def render(board, move_hashes, turn)
+  def render(board)
 
     puts "    a  b  c  d  e  f  g  h "
     @board.each_with_index do |row, i|
@@ -110,10 +111,10 @@ class Board
       print "\n"
     end
 
-    puts "You're in check." if check?(self, move_hashes, turn)
+    puts "You're in check." if check?
   end
 
-  def valid?(move, turn, move_hashes) # [[5, 5], [6, 5]]
+  def valid?(mover turn, move_hashes) # [[5, 5], [6, 5]]
 
     from_pos, to_pos = move
 
@@ -169,18 +170,18 @@ class Board
     return check?(self, move_hashes, turn)
   end
 
-  def draw?(turn, move_hashes)
+  def draw?#(turn, move_hashes)
 
     board.each do |row|
       row.each do |piece|
         next if piece.nil?
-        next unless piece.color == turn
-        unless piece.get_peaceful_coords(self, move_hashes, turn).empty? &&
-          piece.get_attack_coords(self, move_hashes, turn).empty?
-          coords = piece.get_peaceful_coords(self, move_hashes, turn) +
-            piece.get_attack_coords(self, move_hashes, turn)
+        next unless piece.color == game.turn
+        unless piece.get_peaceful_coords(self, game.move_hashes, game.turn).empty? &&
+          piece.get_attack_coords(self, game.move_hashes, game.turn).empty?
+          coords = piece.get_peaceful_coords(self, game.move_hashes, game.turn) +
+            piece.get_attack_coords(self, game.move_hashes, game.turn)
           coords.keep_if do |coord|
-            valid?([piece.pos, coord], turn, move_hashes)
+            valid?([piece.pos, coord], game.turn, game.move_hashes)
           end
           return false unless coords.empty?
         end

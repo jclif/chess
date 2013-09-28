@@ -14,11 +14,12 @@ class HumanPlayer
 
   attr_accessor :color
 
-  def initialize(color)
+  def initialize(color, board)
     @color = color
+    @board = board
   end
 
-  def get_move(board, turn, move_hashes)
+  def get_move(board, turn, move_hashes) # TODO refactorrrrringggg
     puts "Enter your move. Ex: 'f2 f3'"
     answer = gets.chomp.split
 

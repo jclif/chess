@@ -24,7 +24,7 @@ class ChessGame
     if game_types.keys.include?(test_type)
       g = ChessGame.new
       game_types[test_type].split(",").each do |pair|
-        g.board.make_move(g.convert(pair.split))
+        g.board.make_move(g.convert(pair.split), g.move_hashes)
         g.switch_turn
       end
       g.play
@@ -34,21 +34,24 @@ class ChessGame
   def initialize
     @board = Board.new(self)
     @turn = :white
-    @players = {white: HumanPlayer.new(:white, board), black: HumanPlayer.new(:black, board)}
+    @players = {white: HumanPlayer.new(:white), black: HumanPlayer.new(:black)}
     @move_hashes = []
   end
 
   def play
 
-    until board.draw?
-      board.render(board)
-      move = players[turn].get_move
-      board.make_move(move)
+    #board.won?(board, move_hashes, turn) ||
+
+    # get moves and make moves until game is won
+    until board.draw?(turn, move_hashes)
+      board.render(board, move_hashes, turn)
+      move = players[turn].get_move(board, turn, move_hashes)
+      board.make_move(move, move_hashes)
       self.move_hashes << {piece: board[move[1]], move: move}
       switch_turn
     end
 
-    puts board.won?(board) ? "Congrats!" : "Everybody wins!."
+    puts board.won?(board, move_hashes, turn) ? "Congrats!" : "Everybody wins!."
   end
 
   def switch_turn
