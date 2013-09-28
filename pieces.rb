@@ -74,12 +74,15 @@ class Pawn < Piece
   end
 
   def en_passant?(direction)
+    # skip first turn
+    return false if game.move_hashes.length < 3
+
     if color == :white?
       return false unless pos[0] == 3
     else
       return false unless pos[0] == 4
     end
-
+    debugger
     return false unless game.move_hashes.last[:piece].is_a?(Pawn)
 
     enemy_start_pos = game.move_hashes.last[:move][0]

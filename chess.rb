@@ -30,7 +30,12 @@ class ChessGame
       switch_turn
     end
 
-    puts board.won? ? "Congrats!" : "Everybody wins!."
+    if board.won?
+      switch_turn
+      puts "#{turn.to_s.capitalize} wins!"
+    else
+      puts "Everybody wins!."
+    end
   end
 
   def switch_turn
@@ -41,12 +46,15 @@ class ChessGame
     ChessGame.new.play
   end
 
+  # this should be moved to rpsec
   def self.load_test_game(test_type)
 
     game_types = Hash.new
-    game_types[:kingside] = ["g2 g3", "g7 g6", "f1 g2", "f8 g7", "g1 f3", "g8 f6"],
-    game_types[:queenside] =  ["b2 b3", "b7 b6", "b1 c3", "b8 c6", "c1 b2", "c8 b7", "d2 d3", "d7 d6", "d1 d2", "d8 d7"],
+    game_types[:kingside] = ["g2 g3", "g7 g6", "f1 g2", "f8 g7", "g1 f3", "g8 f6"]
+    game_types[:queenside] =  ["b2 b3", "b7 b6", "b1 c3", "b8 c6", "c1 b2", "c8 b7", "d2 d3", "d7 d6", "d1 d2", "d8 d7"]
     game_types[:en_pass] = ["d2 d4", "a7 a6", "d4 d5", "e7 e5"]
+    game_types[:fools_mate] = ["f2 f3", "e7 d5", "g2 g4", "d8 h4"]
+    game_types[:scholars_mate] = ["e2 e4", "e7 e5", "d1 h5", "b8 c6", "f1 c4", "g8 f6", "h5 f7"]
 
     if game_types.keys.include?(test_type)
       g = ChessGame.new
@@ -60,6 +68,6 @@ class ChessGame
 end
 
 if __FILE__ == $0
-#  ChessGame.load_test_game(:en_pass)
-  ChessGame.new.play
+  ChessGame.load_test_game(:en_pass)
+  # ChessGame.new.play
 end

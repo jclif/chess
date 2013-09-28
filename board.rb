@@ -118,7 +118,6 @@ class Board
     # finish refactoring
     from_pos, to_pos = move
 
-    return false unless self[from_pos]
     #check for piece of same color on end square
     from_piece = self[from_pos]
 
