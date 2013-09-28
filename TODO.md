@@ -9,3 +9,5 @@ TODO
 * take pgn from command line or file
 * option to quit game or request draw
 * AIIIIIIII
+* Move class instead of move_hashes
+* organize classes in pieces.rb into folders

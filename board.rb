@@ -2,8 +2,8 @@ class Board
   attr_accessor :board, :game
 
   def initialize(game)
-    @board = new_board
     @game = game
+    @board = new_board
   end
 
   def [](*args)
@@ -35,29 +35,29 @@ class Board
 
   def new_board
     Array.new(8) do |row|
-      if row == 0 || row == 7 #row 0 is black, row 7 is white
+      if row == 0 || row == 7
         Array.new(8) do |col|
           if col == 0 || col == 7
-            Rook.new([row, col])
+            Rook.new([row, col], game)
           elsif col == 1 || col == 6
-            Knight.new([row, col])
+            Knight.new([row, col], game)
           elsif col == 2 || col == 5
-            Bishop.new([row, col])
+            Bishop.new([row, col], game)
           elsif col == 4
-            King.new([row, col])
+            King.new([row, col], game)
           else
-            Queen.new([row, col])
+            Queen.new([row, col], game)
           end
         end
-      elsif row == 1 || row == 6 #row 1 is black, row 6 is white
-        Array.new(8) { |col| Pawn.new([row, col]) }
+      elsif row == 1 || row == 6
+        Array.new(8) { |col| Pawn.new([row, col], game) }
       else
         Array.new(8)
       end
     end
   end
 
-  def make_move(move, move_hashes) # [[6,0],[5,0]]
+  def make_move(move) # [[6,0],[5,0]]
     if self[move[0]].is_a?(King)
       black_queenside = [[0, 4], [0, 2]]
       black_kingside = [[0, 4], [0, 6]]
@@ -78,8 +78,8 @@ class Board
 
     self[move[1]] = self[move[0]]
 
-    if en_passant_move?(move, move_hashes)
-      self[move_hashes.last[:move][1]] = nil
+    if en_passant_move?(move)
+      self[game.move_hashes.last[:move][1]] = nil
     else
       self[move[0]] = nil
     end
@@ -87,18 +87,18 @@ class Board
     self[move[1]].pos = move[1]
   end
 
-  def en_passant_move?(move, move_hashes)
-    return false unless !move_hashes.empty? && move_hashes.last[:piece].is_a?(Pawn) &&
-    2 == (move_hashes.last[:move][0][0] - move_hashes.last[:move][1][0]).abs &&
-    1 == (move[1][1] - move_hashes.last[:move][1][1]).abs
+  def en_passant_move?(move)
+    return false unless !game.move_hashes.empty? && game.move_hashes.last[:piece].is_a?(Pawn) &&
+    2 == (game.move_hashes.last[:move][0][0] - game.move_hashes.last[:move][1][0]).abs &&
+    1 == (move[1][1] - game.move_hashes.last[:move][1][1]).abs
 
     true
   end
 
-  def render(board)
+  def render
 
     puts "    a  b  c  d  e  f  g  h "
-    @board.each_with_index do |row, i|
+    game.board.board.each_with_index do |row, i|
       print " #{8 - i} "
       row.each_with_index do |piece, j|
         color = (i + j).even? ? :light_cyan : :cyan
@@ -114,8 +114,8 @@ class Board
     puts "You're in check." if check?
   end
 
-  def valid?(mover turn, move_hashes) # [[5, 5], [6, 5]]
-
+  def valid?(move) # [[5, 5], [6, 5]]
+    # finish refactoring
     from_pos, to_pos = move
 
     return false unless self[from_pos]
@@ -123,39 +123,36 @@ class Board
     from_piece = self[from_pos]
 
     #check to see if player can move from_piece
-    return false unless from_piece.color == turn
+    return false unless from_piece.color == game.turn
 
     if self[to_pos] #theres a piece at to spot
       to_piece = self[to_pos]
       return false if to_piece.color == from_piece.color
-      return false unless from_piece.get_attack_coords(self, move_hashes, turn).include?(to_pos)
+      return false unless from_piece.get_attack_coords.include?(to_pos)
     else #there's no piece at to_pos
-      return false unless from_piece.get_peaceful_coords(self, move_hashes, turn).include?(to_pos)
+      return false unless from_piece.get_peaceful_coords.include?(to_pos)
     end
 
-    #hypothetically make move to see if king was in check
-    return doesnt_yield_check?(self, move_hashes, turn, move)
-
-    true
+    return !yields_check?(move)
   end
 
-  def doesnt_yield_check?(board, move_hashes, turn, move)
-    yamlized_board = board.to_yaml
+  def yields_check?(move)
+    yamlized_game = game.to_yaml
 
-    b = YAML::load(yamlized_board)
+    g = YAML::load(yamlized_game)
 
-    b.make_move(move, move_hashes)
+    g.board.make_move(move)
 
-    !b.check?(b, move_hashes, turn)
+    return g.board.check?
   end
 
-  def check?(b, move_hashes, turn) #white's turn, white's king
-    b.board.each do |row|
+  def check?
+    game.board.board.each do |row|
       row.each_with_index do |piece, i|
-        next if piece.nil? || piece.color == turn
-        attack_coords = piece.get_attack_coords(b, move_hashes, turn)
+        next if piece.nil? || piece.color == game.turn
+        attack_coords = piece.get_attack_coords
         attack_coords.each do |coord|
-          if b[coord].is_a?(King) && b[coord].color == turn
+          if game.board[coord].is_a?(King) && game.board[coord].color == game.turn
             return true
           end
         end
@@ -165,24 +162,20 @@ class Board
     false
   end
 
-  def won?(board, turn, move_hashes)
-    return false unless draw?(turn, move_hashes)
-    return check?(self, move_hashes, turn)
+  def won?
+    return false unless draw?
+    return check?
   end
 
-  def draw?#(turn, move_hashes)
+  def draw?
 
     board.each do |row|
       row.each do |piece|
-        next if piece.nil?
-        next unless piece.color == game.turn
-        unless piece.get_peaceful_coords(self, game.move_hashes, game.turn).empty? &&
-          piece.get_attack_coords(self, game.move_hashes, game.turn).empty?
-          coords = piece.get_peaceful_coords(self, game.move_hashes, game.turn) +
-            piece.get_attack_coords(self, game.move_hashes, game.turn)
-          coords.keep_if do |coord|
-            valid?([piece.pos, coord], game.turn, game.move_hashes)
-          end
+        next if piece.nil? || piece.color != game.turn
+
+        unless piece.get_peaceful_coords.empty? && piece.get_attack_coords.empty?
+          coords = (piece.get_peaceful_coords + piece.get_attack_coords).keep_if { |c| valid?([piece.pos, c]) }
+
           return false unless coords.empty?
         end
       end

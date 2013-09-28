@@ -1,35 +1,24 @@
-module MoveParser
-  def convert(move) # ["f2", "f3"] => [[6,5],[5,5]]
-    move.map! do |pos|
-      col = ("a".."h").to_a.index(pos[0])
-      [8-pos[1].to_i, col]
+class HumanPlayer
+
+  attr_accessor :color, :game
+
+  def initialize(color, game)
+    @color = color
+    @game = game
+  end
+
+  def get_move
+    regexp = Regexp.new('[a-h][0-8] [a-h][0-8]')
+    move = ""
+
+    loop do
+      puts "Enter your move. Ex: 'f2 f3'"
+      input = gets.chomp
+      move = game.pgn_to_coords(input)
+
+      break if regexp.match(input) && game.board.valid?(move)
     end
 
     move
-  end
-end
-
-class HumanPlayer
-  include MoveParser
-
-  attr_accessor :color
-
-  def initialize(color, board)
-    @color = color
-    @board = board
-  end
-
-  def get_move(board, turn, move_hashes) # TODO refactorrrrringggg
-    puts "Enter your move. Ex: 'f2 f3'"
-    answer = gets.chomp.split
-
-    unless board.valid?(convert(answer), turn, move_hashes)
-      raise StandardError.new "Invalid move. Try again loser!"
-    end
-
-    answer
-  rescue StandardError => e
-    puts e.message
-    retry
   end
 end
