@@ -14,7 +14,7 @@ class ChessGame
     ChessGame.new.play
   end
 
-  def self.load_game(test_type)
+  def self.load_test_game(test_type)
 
     game_types = {kingside: "g2 g3,g7 g6,f1 g2,f8 g7,g1 f3,g8 f6",
                   queenside: "b2 b3,b7 b6,b1 c3,b8 c6,c1 b2,c8 b7,d2 d3,d7 d6,d1 d2,d8 d7",
@@ -60,5 +60,5 @@ class ChessGame
 end
 
 if __FILE__ == $0
-  ChessGame.load_game(:en_pass)
+  ChessGame.load_test_game(:en_pass)
 end

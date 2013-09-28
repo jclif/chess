@@ -6,5 +6,6 @@ TODO
 * en passant(started implementing)
 * pawn promotion
 * load and save pgn to file
+* take pgn from command line or file
 * option to quit game or request draw
 * AIIIIIIII
