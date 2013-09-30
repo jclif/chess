@@ -79,14 +79,56 @@ class Board
     self[move[1]] = self[move[0]]
 
     if en_passant_move?(move)
-      debugger
       self[game.move_hashes.last[:move][1]] = nil
-      self[move[0]] = nil
     else
       self[move[0]] = nil
     end
 
     self[move[1]].pos = move[1]
+
+    piece = self[move[1]]
+
+    if game.moving
+      if piece.is_a?(Pawn)
+        if piece.color == :white && piece.pos[0] == 0
+          promote_pawn(piece)
+        elsif piece.color == :black && piece.pos[0] == 7
+          promote_pawn(piece)
+        end
+      end
+    end
+  end
+
+  def promote_pawn(piece)
+    # get a piece choice from user
+    # create choosen piece on current pieces pos
+    input = ""
+    regexp = Regexp.new('[BNRQ]')
+    until regexp.match(input)
+      puts "Which piece would you like your pawn to become? ('B', 'N', 'R', 'Q')"
+      input = gets.chomp
+    end
+
+    color = piece.color
+
+    case input
+    when 'B'
+      new_piece = Bishop.new(piece.pos, game)
+      self[piece.pos] = new_piece
+      new_piece.color = color
+    when 'N'
+      new_piece = Knight.new(piece.pos, game)
+      self[piece.pos] = new_piece
+      new_piece.color = color
+    when 'R'
+      new_piece = Rook.new(piece.pos, game)
+      self[piece.pos] = new_piece
+      new_piece.color = color
+    when 'Q'
+      new_piece = Queen.new(piece.pos, game)
+      self[piece.pos] = new_piece
+      new_piece.color = color
+    end
   end
 
   def en_passant_move?(move)
@@ -172,7 +214,6 @@ class Board
   end
 
   def draw?
-
     board.each do |row|
       row.each do |piece|
         next if piece.nil? || piece.color != game.turn

@@ -1,6 +1,6 @@
 TODO
 ====
-
+* more elegant solution than @moving
 * lots of draw conditions (50-move rule,threefold repitition, offer,...)
 * pawn promotion
 * load and save pgn to file
