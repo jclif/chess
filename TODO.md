@@ -2,7 +2,6 @@ TODO
 ====
 
 * lots of draw conditions (50-move rule,threefold repitition, offer,...)
-* en passant(started implementing)
 * pawn promotion
 * load and save pgn to file
 * take pgn from command line or file

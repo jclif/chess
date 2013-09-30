@@ -79,7 +79,9 @@ class Board
     self[move[1]] = self[move[0]]
 
     if en_passant_move?(move)
+      debugger
       self[game.move_hashes.last[:move][1]] = nil
+      self[move[0]] = nil
     else
       self[move[0]] = nil
     end
@@ -90,7 +92,7 @@ class Board
   def en_passant_move?(move)
     return false unless !game.move_hashes.empty? && game.move_hashes.last[:piece].is_a?(Pawn) &&
     2 == (game.move_hashes.last[:move][0][0] - game.move_hashes.last[:move][1][0]).abs &&
-    1 == (move[1][1] - game.move_hashes.last[:move][1][1]).abs
+    (move[1][1] == game.move_hashes.last[:move][1][1])
 
     true
   end
@@ -123,6 +125,9 @@ class Board
 
     #check to see if player can move from_piece
     return false unless from_piece.color == game.turn
+    if en_passant_move?(move) && from_piece.get_attack_coords.include?(to_pos) && !yields_check?(move)
+      return true
+    end
 
     if self[to_pos] #theres a piece at to spot
       to_piece = self[to_pos]
