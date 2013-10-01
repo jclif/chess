@@ -1,0 +1,70 @@
+<html>
+<head>
+<style>
+#chessboard {
+  padding-left: 0;
+  padding-right: 0;
+  margin: auto;
+  margin-top: 15%;
+  display:block;
+  width:425px;
+}
+#chat {
+  margin-right: 15px;
+  margin-bottom: 10px;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+#gear {
+  margin-right: 20px;
+  margin-top: 10px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 50px;
+}
+#globe {
+  margin-left: 0px;
+  margin-top: 0px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100px;
+}
+</style>
+</head>
+<body>
+<img id="globe" src="globe.png" alt="globe">
+<img id="gear" src="gear.png" width=50 alt="gear">
+<canvas id="chessboard" width="425" height="425" style="border:0px solid #EEEEEE;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+<img id="chat" src="chat.png" width=50 alt="chat">
+<script>
+var c=document.getElementById("chessboard");
+var ctx=c.getContext("2d");
+ctx.rect(20, 0, 400, 400);
+ctx.lineWidth = 1;
+ctx.strokeStyle = 'grey';
+ctx.stroke();
+
+ctx.fillStyle="grey";
+var left = 20;
+for(var a=0;a<8;a++) {
+    for(var i=0; i<8;i+=2) {
+      startX = i * 50;
+      if(a%2==0) startX = (i+1) * 50;
+      ctx.fillRect(startX + left,(a*50) ,50,50);
+    }
+}
+ctx.font = 'italic 18px Calibri';
+var alpha = ['a','b','c','d','e','f','g','h'];
+for(var i=0;i<8;i++) 
+    ctx.fillText(alpha[i], 40 + (i*50),  415);
+var num = 8;
+for(var i=0;i<8;i++) 
+    ctx.fillText(num--, 5,  30 + (i*50));
+</script>
+</body>
+</html>
