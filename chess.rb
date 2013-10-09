@@ -78,6 +78,6 @@ class ChessGame
 end
 
 if __FILE__ == $0
-  ChessGame.load_test_game(:white_pawn_promotion)
-  # ChessGame.new.play
+  # ChessGame.load_test_game(:white_pawn_promotion)
+  ChessGame.new.play
 end
