@@ -1,7 +1,6 @@
 TODO
 ====
 * diagonal right produces "undefined method `pos=' for nil:NilClas" on line 226
-* two pawn two-space moves on the same column deletes first pawn (wat) not sure what other symptoms this bug may cause 
 * more elegant solution than @moving
 * lots of draw conditions (50-move rule,threefold repitition, offer,...)
 * pawn promotion
